@@ -1,0 +1,43 @@
+/* Style for the card containing each gallery image */
+.gallery-card {
+    position: relative; /* Required for the absolute positioning of the tag */
+    overflow: hidden;   /* Hides any part of the image that goes outside the card */
+    height: 250px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #e9ecef; /* A light grey background for the image container */
+}
+
+/* Style for the image itself to ensure it fits well */
+.gallery-card img {
+    height: 100%;
+    width: 100%;
+    object-fit: cover; /* Scales the image to cover the area without distortion */
+}
+
+/* The style for the 'ADULT' content tag */
+.adult-tag {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background-color: rgba(220, 53, 69, 0.9); /* Bootstrap's 'danger' red with transparency */
+    color: white;
+    padding: 4px 10px;
+    border-radius: 5px;
+    font-size: 0.85em;
+    font-weight: bold;
+    backdrop-filter: blur(3px); /* A nice glass effect for modern browsers */
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Status message styling */
+#statusMessage.alert {
+    padding: 0.5rem 1rem;
+    margin-bottom: 0;
+}
+
+.adult-image {
+    filter: blur(20px);
+    -webkit-filter: blur(20px); /* For Safari/Chrome */
+}
