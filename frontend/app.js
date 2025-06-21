@@ -14,12 +14,46 @@ const uploadButtonText = document.getElementById('uploadButtonText');
 const statusMessage = document.getElementById('statusMessage');
 const galleryGrid = document.getElementById('galleryGrid');
 const galleryLoadingText = document.getElementById('galleryLoadingText');
+// Initialize the Bootstrap Modal from the HTML
+// const imageModal = new bootstrap.Modal(document.getElementById('imageModal'));
+// const modalImage = document.getElementById('modalImage');
+// // NEW: Confirmation Modal for Deletion
+// const confirmDeleteModal = new bootstrap.Modal(document.getElementById('confirmDeleteModal'));
+// const deleteModalBody = document.getElementById('deleteModalBody');
+// const confirmDeleteButton = document.getElementById('confirmDeleteButton');
 
+
+
+// --- MODIFICATION START ---
+// We will declare the modal variables here, but NOT initialize them yet.
+let imageModal;
+let modalImage;
+let confirmDeleteModal;
+let deleteModalBody;
+let confirmDeleteButton;
+// --- MODIFICATION END ---
 
 // =================================================================
 // EVENT LISTENERS
 // =================================================================
-document.addEventListener('DOMContentLoaded', loadImages);
+document.addEventListener('DOMContentLoaded', () => {
+    // --- MODIFICATION START ---
+    // NOW that the page is fully loaded, we can safely find our HTML elements
+    // and initialize the Bootstrap modals.
+    imageModal = new bootstrap.Modal(document.getElementById('imageModal'));
+    modalImage = document.getElementById('modalImage');
+    confirmDeleteModal = new bootstrap.Modal(document.getElementById('confirmDeleteModal'));
+    deleteModalBody = document.getElementById('deleteModalBody');
+    confirmDeleteButton = document.getElementById('confirmDeleteButton');
+    
+    // Attach the delete event listener here as well.
+    confirmDeleteButton.addEventListener('click', executeDelete);
+    
+    // Load the initial set of images.
+    loadImages();
+    // --- MODIFICATION END ---
+});
+
 uploadButton.addEventListener('click', handleUpload);
 
 
@@ -88,6 +122,86 @@ async function uploadSingleFile(file) {
 }
 
 
+/** NEW: Main handler for deleting an image */
+async function handleDelete(event) {
+    // Stop the click from also triggering the modal popup
+    event.stopPropagation(); 
+    
+    const blobName = event.currentTarget.dataset.blobName;
+    if (!confirm(`Are you sure you want to delete "${blobName}"? This action cannot be undone.`)) {
+        return;
+    }
+    try {
+        const response = await fetch(`${FUNCTION_APP_URL}/deleteImage`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ blobName: blobName })
+        });
+        if (!response.ok) {
+            const errorData = await response.text();
+            throw new Error(`Failed to delete: ${errorData}`);
+        }
+        updateStatus(`Successfully deleted ${blobName}`, 'success');
+        await loadImages(); // Refresh the gallery
+    } catch (error) {
+        updateStatus(error.message, 'danger');
+    }
+}
+
+
+/** 
+ * UPDATED: This function now just opens the confirmation modal.
+ * The actual deletion logic is moved to a separate function.
+ */
+function handleDelete(event) {
+    event.stopPropagation();
+    const blobName = event.currentTarget.dataset.blobName;
+    
+    // Set the confirmation message in the modal
+    deleteModalBody.textContent = `Are you sure you want to permanently delete "${blobName}"?`;
+    
+    // Store the blobName on the confirm button to be used later
+    confirmDeleteButton.dataset.blobName = blobName;
+    
+    // Show the modal
+    confirmDeleteModal.show();
+}
+
+/** 
+ * NEW: This function is called ONLY when the user clicks the "Delete" button inside the modal.
+ */
+async function executeDelete() {
+    const blobName = confirmDeleteButton.dataset.blobName;
+    
+    // Show a loading state on the button
+    confirmDeleteButton.disabled = true;
+    confirmDeleteButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Deleting...';
+    
+    try {
+        const response = await fetch(`${FUNCTION_APP_URL}/deleteImage`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ blobName: blobName })
+        });
+        if (!response.ok) {
+            const errorData = await response.text();
+            throw new Error(`Failed to delete: ${errorData}`);
+        }
+        updateStatus(`Successfully deleted ${blobName}`, 'success');
+        await loadImages(); // Refresh the gallery
+    } catch (error) {
+        updateStatus(error.message, 'danger');
+    } finally {
+        // Hide the modal and reset the button
+        confirmDeleteModal.hide();
+        confirmDeleteButton.disabled = false;
+        confirmDeleteButton.innerHTML = 'Delete';
+    }
+}
+// NEW: Attach the executeDelete function to the modal's delete button click event
+confirmDeleteButton.addEventListener('click', executeDelete);
+
+
 /**
  * Fetches image data from our '/getImages' Azure Function and renders the gallery.
  * (This function includes the new blur/tag logic)
@@ -119,14 +233,47 @@ async function loadImages() {
             img.src = image.displayUrl;
             img.alt = image.rowKey;
             
-            if (image.isAdult) {
-                img.classList.add('adult-image');
+            img.addEventListener('click', () => {
+                modalImage.src = img.src;
+                imageModal.show();
+            });
+
+            // --- NEW TAGGING LOGIC ---
+            const tagsContainer = document.createElement('div');
+            tagsContainer.className = 'tags-container';
+            let isFlagged = false;
+
+            // Function to create a tag element
+            const createTag = (text, type) => {
                 const tag = document.createElement('span');
-                tag.className = 'adult-tag';
-                tag.textContent = 'ADULT';
-                card.appendChild(tag);
+                tag.className = `tag tag-${type}`;
+                tag.textContent = text;
+                tagsContainer.appendChild(tag);
+                isFlagged = true;
+            };
+
+            if (image.isAdult) createTag('ADULT', 'adult');
+            if (image.isViolent) createTag('VIOLENCE', 'violent');
+            if (image.isOffensive) createTag('OFFENSIVE', 'offensive');
+            if (image.isWeapon) createTag('WEAPON', 'weapon');
+            if (image.isDrugs) createTag('DRUGS', 'drugs');
+            if (image.isSelfHarm) createTag('SELF-HARM', 'selfharm');
+
+            // Apply blur if any flag is true
+            if (isFlagged) {
+                img.classList.add('adult-image');
             }
 
+            card.appendChild(tagsContainer);
+
+            // Add the delete button
+            const deleteButton = document.createElement('button');
+            deleteButton.className = 'delete-button';
+            deleteButton.innerHTML = '<i class="bi bi-trash-fill"></i>'; // UPDATED: Use <i> tag for a Bootstrap trash icon
+            deleteButton.dataset.blobName = image.rowKey;
+            deleteButton.addEventListener('click', handleDelete);
+
+            card.appendChild(deleteButton);
             card.appendChild(img);
             col.appendChild(card);
             galleryGrid.appendChild(col);
