@@ -53,6 +53,20 @@
 
     <!-- Add this to the end of index.html, before </body> -->
 
+    <!-- Image Popup Modal -->
+    <div class="modal fade" id="imageModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content bg-transparent border-0">
+          <div class="modal-header border-0">
+              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body p-0">
+            <img src="" class="img-fluid" id="modalImage" alt="Enlarged view">
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Add this new modal block to index.html -->
     <!-- Confirmation Modal for Deletion -->
     <div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">

@@ -51,8 +51,8 @@ app.storageBlob('processImage', {
             const isAdult = ((data.nudity?.sexual_activity ?? 0) > 0.5 || (data.nudity?.explicit ?? 0) > 0.5 || (data.nudity?.suggestive ?? 0) > 0.8);
             const isWeapon = (data.weapon ?? 0) > 0.5;
             const isDrugs = (data.drugs ?? 0) > 0.5;
-            const isOffensive = (data.offensive?.prob ?? 0) > 0.5;
-            const isSelfHarm = (data.self_harm?.prob ?? 0) > 0.5;
+            const isOffensive = (data.offensive ?? 0) > 0.5;
+            const isSelfHarm = (data.self_harm ?? 0) > 0.5;
             const isViolent = false; // 'violence' model is not in our current check
 
             const entity = {
