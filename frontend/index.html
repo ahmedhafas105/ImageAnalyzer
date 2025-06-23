@@ -11,9 +11,15 @@
     <!-- Custom Stylesheet -->
     <link rel="stylesheet" href="style.css">
 </head>
-<body class="bg-light">
+<body class="bg-light" style="display: none;">
 
-    <div class="container mt-4">
+    <div id="auth-loading" class="d-flex justify-content-center align-items-center vh-100">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+
+    <div id="app-content" class="container mt-4" style="display: none;">
         <header class="text-center p-4 mb-4 bg-white rounded shadow-sm">
             <h1>Image Moderation Platform</h1>
             <p class="lead text-muted">Upload images to Azure Blob Storage for content analysis.</p>
@@ -89,7 +95,8 @@
 
     <!-- You need the Bootstrap JS for the modal to work. Add this if you don't have it. -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script type="module" src="firebase-init.js"></script>
     <!-- Our main JavaScript file -->
-    <script src="app.js"></script>
+    <script type="module" src="app.js"></script>
 </body>
 </html>

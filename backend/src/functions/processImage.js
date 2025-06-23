@@ -15,11 +15,13 @@ const blobServiceClient = new BlobServiceClient(
 const tableClient = TableClient.fromConnectionString(process.env.AzureWebJobsStorage, "imageanalysis");
 
 app.storageBlob('processImage', {
-    path: 'images/{name}',
+    path: 'images/{userId}/{name}',
     connection: 'AzureWebJobsStorage',
     handler: async (blob, context) => {
+        const userId = context.triggerMetadata.userId;
         const blobName = context.triggerMetadata.name;
         context.log(`[processImage] Processing blob: ${blobName}`);
+        const fullBlobName = `${userId}/${blobName}`;
 
         try {
             const blobClient = blobServiceClient.getContainerClient(containerName).getBlobClient(blobName);
@@ -56,7 +58,7 @@ app.storageBlob('processImage', {
             const isViolent = false; // 'violence' model is not in our current check
 
             const entity = {
-                partitionKey: "images",
+                partitionKey: userId,
                 rowKey: blobName,
                 imageUrl: context.triggerMetadata.uri,
                 isAdult, isViolent, isOffensive, isWeapon, isDrugs, isSelfHarm,

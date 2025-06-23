@@ -3,6 +3,8 @@ const { TableClient } = require("@azure/data-tables");
 // MODIFIED: Import all necessary components
 const { BlobServiceClient, StorageSharedKeyCredential, BlobSASPermissions } = require("@azure/storage-blob");
 
+const { verifyFirebaseToken } = require('../../auth-middleware'); // Import middleware
+
 // MODIFIED: Use the explicit, consistent way to create clients
 const accountName = process.env.AZURE_STORAGE_ACCOUNT_NAME;
 const accountKey = process.env.AZURE_STORAGE_ACCOUNT_KEY;
@@ -18,9 +20,16 @@ app.http('getImages', {
     methods: ['GET'],
     authLevel: 'anonymous',
     handler: async (request, context) => {
+        const authResult = await verifyFirebaseToken(request, context);
+        if (authResult.error) return authResult.error;
+        
+        const userId = authResult.user.uid; // Get the authenticated user's ID
+
         try {
             context.log(`[getImages] HTTP trigger processed a request.`);
-            const entitiesIterator = tableClient.listEntities();
+            const entitiesIterator = tableClient.listEntities({
+                queryOptions: { filter: `PartitionKey eq '${userId}'` }
+            });
             const results = [];
             const containerClient = blobServiceClient.getContainerClient(containerName);
 
