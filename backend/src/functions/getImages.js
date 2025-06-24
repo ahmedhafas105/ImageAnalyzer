@@ -26,7 +26,7 @@ app.http('getImages', {
         const userId = authResult.user.uid; // Get the authenticated user's ID
 
         try {
-            context.log(`[getImages] HTTP trigger processed a request.`);
+            context.log(`[getImages] Getting images for user: ${userId}`);
             const entitiesIterator = tableClient.listEntities({
                 queryOptions: { filter: `PartitionKey eq '${userId}'` }
             });
@@ -34,7 +34,8 @@ app.http('getImages', {
             const containerClient = blobServiceClient.getContainerClient(containerName);
 
             for await (const entity of entitiesIterator) {
-                const blobClient = containerClient.getBlobClient(entity.rowKey);
+                const fullBlobName = `${userId}/${entity.rowKey}`;
+                const blobClient = containerClient.getBlobClient(fullBlobName);
 
                 const displayUrl = await blobClient.generateSasUrl({
                     permissions: BlobSASPermissions.parse("r"),

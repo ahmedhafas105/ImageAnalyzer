@@ -172,6 +172,7 @@ async function uploadSingleFile(file) {
         }
     } catch (authError) {
         // If getting the header fails, redirect.
+        console.error("Authentication error during upload:", authError);
         window.location.replace('signin.html');
     }
 }
@@ -201,7 +202,7 @@ async function executeDelete() {
             headers: { ...headers, 'Content-Type': 'application/json' },
             body: JSON.stringify({ blobName: blobName })
         });
-        if (!response.ok) {
+        if (!response.ok) { 
             const errorData = await response.text();
             throw new Error(`Failed to delete: ${errorData}`);
         }
@@ -325,8 +326,12 @@ async function loadImages() {
 
     } catch (error) {
         console.error('Error loading gallery:', error);
-        galleryLoadingText.style.display = 'none';
-        galleryGrid.innerHTML = `<p class="text-danger">Could not load gallery. Is the backend running?</p>`;
+        if (error.message.includes("User not authenticated")) {
+            window.location.replace('login.html');
+        } else {
+            galleryLoadingText.style.display = 'none';
+            galleryGrid.innerHTML = `<p class="text-danger">Could not load gallery. Is the backend running?</p>`;
+        }
     }
 }
 // async function loadImages() {
@@ -421,11 +426,7 @@ function updateStatus(message, type) {
 function setUploadUIState(isUploading, fileCount = 0) {
     uploadButton.disabled = isUploading;
     uploadSpinner.style.display = isUploading ? 'inline-block' : 'none';
-    if (isUploading) {
-        uploadButtonText.textContent = `Uploading ${fileCount} file(s)...`;
-    } else {
-        uploadButtonText.textContent = 'Upload Image';
-    }
+    uploadButtonText.textContent = isUploading ? `Uploading ${fileCount} file(s)...` : 'Upload Image';
 }
 
 // // =================================================================
