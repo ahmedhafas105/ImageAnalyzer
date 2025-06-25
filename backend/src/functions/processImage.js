@@ -20,11 +20,12 @@ app.storageBlob('processImage', {
     handler: async (blob, context) => {
         const userId = context.triggerMetadata.userId;
         const blobName = context.triggerMetadata.name;
-        context.log(`[processImage] Processing blob: ${blobName}`);
         const fullBlobName = `${userId}/${blobName}`;
+        context.log(`[processImage] Processing blob: ${fullBlobName}`);
 
         try {
-            const blobClient = blobServiceClient.getContainerClient(containerName).getBlobClient(blobName);
+            // MODIFIED: Use the fullBlobName to get the correct blob client
+            const blobClient = blobServiceClient.getContainerClient(containerName).getBlobClient(fullBlobName);
             const imageUrlWithSas = await blobClient.generateSasUrl({
                 permissions: BlobSASPermissions.parse("r"),
                 expiresOn: new Date(new Date().valueOf() + 3600 * 1000),
@@ -53,8 +54,8 @@ app.storageBlob('processImage', {
             const isAdult = ((data.nudity?.sexual_activity ?? 0) > 0.5 || (data.nudity?.explicit ?? 0) > 0.5 || (data.nudity?.suggestive ?? 0) > 0.8);
             const isWeapon = (data.weapon ?? 0) > 0.5;
             const isDrugs = (data.drugs ?? 0) > 0.5;
-            const isOffensive = (data.offensive ?? 0) > 0.5;
-            const isSelfHarm = (data.self_harm ?? 0) > 0.5;
+            const isOffensive = (data.offensive?.prob ?? 0) > 0.5;
+            const isSelfHarm = (data.self_harm?.prob ?? 0) > 0.5;
             const isViolent = false; // 'violence' model is not in our current check
 
             const entity = {

@@ -34,9 +34,13 @@ app.http('deleteImage', {
                 return { status: 400, body: "Please provide a blobName." };
             }
 
+            // MODIFIED: Correctly construct the full path to the blob inside the user's folder
+            const fullBlobName = `${userId}/${blobName}`;
+            context.log(`[deleteImage] Deleting blob: ${fullBlobName} for user: ${userId}`);
+            // 1. Delete the blob
             context.log(`[deleteImage] Deleting blob: ${blobName}`);
 
-            const blobClient = blobServiceClient.getContainerClient(containerName).getBlobClient(blobName);
+            const blobClient = blobServiceClient.getContainerClient(containerName).getBlobClient(fullBlobName);
             await blobClient.delete();
             context.log(`[deleteImage] Deleted blob: ${blobName}`);
 

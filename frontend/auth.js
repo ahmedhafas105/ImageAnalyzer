@@ -11,7 +11,7 @@ const errorMessageDiv = document.getElementById('error-message');
 
 // --- Helper function to show errors ---
 const showAuthError = (message) => {
-    errorMessageDiv.textContent = message;
+    errorMessageDiv.textContent = message.replace('Firebase: ', '');
     errorMessageDiv.classList.remove('d-none');
 };
 
@@ -41,7 +41,7 @@ if (signupForm) {
             });
 
             // Redirect to the main app page
-            window.location.href = 'index.html';
+            window.location.href = 'signin.html?signup=success';
 
         } catch (error) {
             showAuthError(error.message);
@@ -51,6 +51,17 @@ if (signupForm) {
 
 // --- Login Logic ---
 if (loginForm) {
+
+     // MODIFIED: Check for the success message from the signup page
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('signup') === 'success') {
+        const successMessageDiv = document.getElementById('success-message');
+        if (successMessageDiv) {
+            successMessageDiv.textContent = 'Registration successful! Please log in.';
+            successMessageDiv.classList.remove('d-none');
+        }
+    }
+
     loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         
