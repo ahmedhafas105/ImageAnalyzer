@@ -34,7 +34,7 @@ app.storageBlob('processImage', {
             const sightengineApiUser = process.env.SIGHTENGINE_API_USER;
             const sightengineApiSecret = process.env.SIGHTENGINE_API_SECRET;
             
-            const models_to_check = 'nudity-2.0,wad,offensive,self-harm';
+            const models_to_check = 'nudity-2.0,wad,offensive,self-harm,violence,gore';
             
             const response = await axios.get('https://api.sightengine.com/1.0/check.json', {
                 params: {
@@ -56,13 +56,14 @@ app.storageBlob('processImage', {
             const isDrugs = (data.drugs ?? 0) > 0.5;
             const isOffensive = (data.offensive?.prob ?? 0) > 0.5;
             const isSelfHarm = (data.self_harm?.prob ?? 0) > 0.5;
-            const isViolent = false; // 'violence' model is not in our current check
+            const isViolent = (data.violence?.prob ?? 0) > 0.5;
+            const isGore = (data.gore?.prob ?? 0) > 0.5;
 
             const entity = {
                 partitionKey: userId,
                 rowKey: blobName,
                 imageUrl: context.triggerMetadata.uri,
-                isAdult, isViolent, isOffensive, isWeapon, isDrugs, isSelfHarm,
+                isAdult, isViolent, isOffensive, isWeapon, isDrugs, isSelfHarm, isGore,
                 sightengineResponse: JSON.stringify(data)
             };
 

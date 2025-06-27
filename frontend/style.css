@@ -141,3 +141,4 @@ body {
 .tag.tag-weapon { background-color: rgba(13, 110, 253, 0.8); }   /* Blue */
 .tag.tag-drugs { background-color: rgba(25, 135, 84, 0.8); }    /* Green */
 .tag.tag-selfharm { background-color: rgba(111, 66, 193, 0.8); }  /* Purple */
+.tag.tag-gore { background-color: rgba(139, 7, 7, 0.8); }      /* Dark Red for Gore */

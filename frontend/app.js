@@ -213,7 +213,7 @@ async function loadImages() {
             const tagsContainer = document.createElement('div');
             tagsContainer.className = 'tags-container';
 
-            let isFlagged = false;
+            
             
             // Helper function to create a tag and add it to the container
             const createTag = (text, type) => {
@@ -221,18 +221,20 @@ async function loadImages() {
                 tag.className = `tag tag-${type}`;
                 tag.textContent = text;
                 tagsContainer.appendChild(tag);
-                isFlagged = true; // Mark that at least one flag is true
+                
             };
 
             // Check each flag from the backend data and create a corresponding tag
             if (image.isAdult) createTag('Adult', 'adult');
             if (image.isViolent) createTag('Violence', 'violent');
+            if (image.isGore) createTag('GORE', 'gore'); // The new tag
             if (image.isOffensive) createTag('Offensive', 'offensive');
             if (image.isWeapon) createTag('Weapon', 'weapon');
             if (image.isDrugs) createTag('Drugs', 'drugs');
             if (image.isSelfHarm) createTag('Self-Harm', 'selfharm');
 
-            // Apply the blur effect to the image if any content was flagged
+            // The blur logic now includes 'isGore'
+            const isFlagged = image.isAdult || image.isViolent || image.isOffensive || image.isWeapon || image.isDrugs || image.isSelfHarm || image.isGore;
             if (isFlagged) {
                  img.classList.add('flagged-image');
             }
