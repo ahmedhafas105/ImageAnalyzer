@@ -1,120 +1,149 @@
-/* Style for the card containing each gallery image */
-.gallery-card {
-    position: relative; /* Required for the absolute positioning of the tag */
-    overflow: hidden;   /* Hides any part of the image that goes outside the card */
-    height: 250px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: #e9ecef; /* A light grey background for the image container */
+/* Import Google Fonts for a modern look */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: #f8f9fa; /* Light grey background */
 }
 
-/* Style for the image itself to ensure it fits well */
+/* Header Styles for "SMART BACKUP" */
+.app-header {
+    background-color: white;
+    padding: 1rem 2rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 1020;
+}
+
+.app-header h1 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1a3a6b;
+}
+
+/* Gallery Card Styles */
+.gallery-card {
+    position: relative;
+    border-radius: 1rem;
+    overflow: hidden;
+    height: 250px;
+    background-color: #e9ecef;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.gallery-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+}
+
 .gallery-card img {
     height: 100%;
     width: 100%;
-    object-fit: cover; /* Scales the image to cover the area without distortion */
-    cursor: pointer; /* MODIFICATION: Added cursor to indicate images are clickable for the modal */
+    object-fit: cover;
+    cursor: pointer;
 }
 
-/* Status message styling */
-#statusMessage.alert {
-    padding: 0.5rem 1rem;
-    margin-bottom: 0;
+/* Blurry effect for flagged images */
+.flagged-image {
+    filter: blur(15px);
+    -webkit-filter: blur(15px);
 }
 
-/* The style for blurring flagged images */
-.adult-image {
-    filter: blur(20px);
-    -webkit-filter: blur(20px); /* For Safari/Chrome */
-}
-
-
-/* --- MODIFICATION START: The old '.adult-tag' style has been replaced by this new, flexible system --- */
-
-/* This container will be positioned in the top-right corner and hold all our tags. */
-.tags-container {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    display: flex;
-    flex-direction: column; /* Stacks the tags vertically */
-    align-items: flex-end; /* Aligns tags to the right */
-    gap: 5px; /* Adds a small space between each tag */
-    z-index: 10; /* Ensures tags appear above the image */
-}
-
-/* This is the base style shared by ALL tags. */
-.tag {
-    color: white;
-    padding: 2px 8px;
-    border-radius: 5px;
-    font-size: 0.8em;
-    font-weight: bold;
-    backdrop-filter: blur(2px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-/* These are the specific color styles for each tag type. */
-.tag.tag-adult { background-color: rgba(220, 53, 69, 0.9); } /* Red for Adult */
-.tag.tag-violent { background-color: rgba(108, 117, 125, 0.9); } /* Grey for Violence */
-.tag.tag-offensive { background-color: rgba(255, 193, 7, 0.9); color: black; } /* Yellow for Offensive */
-.tag.tag-weapon { background-color: rgba(52, 58, 64, 0.9); } /* Dark Grey for Weapon */
-.tag.tag-drugs { background-color: rgba(25, 135, 84, 0.9); } /* Green for Drugs */
-.tag.tag-selfharm { background-color: rgba(111, 66, 193, 0.9); } /* Purple for Self-Harm */
-
-/* --- MODIFICATION END --- */
-
-
-/* --- MODIFICATION: Added styles for the delete button --- */
- /*.delete-button {
-    position: absolute;
-    bottom: 10px;
-    right: 10px;
-    background-color: rgba(255, 255, 255, 0.7);
-    border: none;
-    border-radius: 50%;
-    width: 30px;
-    height: 30px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.2em;
-    color: #dc3545; /* Bootstrap's 'danger' red */
-    /* opacity: 0;  */
-    /* Hidden by default, appears on hover */
-    /* transition: opacity 0.2s ease-in-out; */
-    /* z-index: 10;  */
-    /* Ensures button appears above the image */
-/*} */
-
-/* Make sure your .delete-button class looks like this */
+/* Delete Button Styles - now in TOP-RIGHT corner */
 .delete-button {
     position: absolute;
-    bottom: 10px;
-    right: 10px;
-    left: 10px;
     top: 10px;
-    padding-right: 5px;
-    padding-bottom: 2px;
-    padding-top: 3px;
-    background-color: rgba(255, 255, 255, 0.7);
+    right: 10px;
+    background-color: rgba(239, 83, 80, 0.8);
+    color: white;
     border: none;
-    border-radius: 10%;
-    width: 30px;
-    height: 30px;
-    /* These three lines are important for centering the icon */
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.2em;
-    color: #dc3545;
+    font-size: 1em;
     opacity: 0;
     transition: opacity 0.2s ease-in-out;
     z-index: 10;
 }
 
-/* This makes the delete button visible when you hover over the image card. */
 .gallery-card:hover .delete-button {
     opacity: 1;
+}
+
+/* Floating Action Button for Uploading */
+.fab {
+    position: fixed;
+    bottom: 25px;
+    right: 25px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    font-size: 1.5rem;
+    width: 60px;
+    height: 60px;
+}
+
+/* Add this to the end of your style.css */
+.flagged-icon {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background-color: rgba(255, 193, 7, 0.9); /* Yellow warning color */
+    color: black;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9em;
+    z-index: 10;
+}
+/* ============================================== */
+/* === ADD THIS CODE TO THE END OF style.css ==== */
+/* ============================================== */
+
+/* This container will hold all tags and position them neatly */
+.tags-container {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    display: flex;
+    flex-direction: column; /* Stacks the tags vertically */
+    align-items: flex-start;  /* Aligns tags to the left */
+    gap: 5px; /* Adds a small space between each tag */
+    z-index: 10; /* Ensures tags appear above the image and delete button */
+}
+
+/* This is the base style shared by ALL tags for a consistent look. */
+.tag {
+    color: white;
+    padding: 3px 9px;
+    border-radius: 5px;
+    font-size: 0.75rem; /* Small and clean font size */
+    font-weight: 600;
+    backdrop-filter: blur(3px); /* Glass effect */
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    text-transform: uppercase; /* e.g., "ADULT", "WEAPON" */
+}
+
+/* Specific background colors for each tag type */
+.tag.tag-adult { background-color: rgba(220, 53, 69, 0.8); }     /* Red */
+.tag.tag-violent { background-color: rgba(52, 58, 64, 0.8); }      /* Dark Grey */
+.tag.tag-offensive { background-color: rgba(255, 193, 7, 0.8); color: black; } /* Yellow */
+.tag.tag-weapon { background-color: rgba(13, 110, 253, 0.8); }   /* Blue */
+.tag.tag-drugs { background-color: rgba(25, 135, 84, 0.8); }    /* Green */
+.tag.tag-selfharm { background-color: rgba(111, 66, 193, 0.8); }  /* Purple */
+.tag.tag-gore { background-color: rgba(139, 7, 7, 0.8); }      /* Dark Red for Gore */
+
+/* Add this to style.css to ensure toasts are always on top */
+.toast-container {
+    z-index: 1100; /* A high z-index to appear over modals (usually z-index 1050) */
 }

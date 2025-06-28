@@ -1,6 +1,8 @@
 const { app } = require('@azure/functions');
 const { BlobServiceClient, StorageSharedKeyCredential, BlobSASPermissions } = require("@azure/storage-blob");
 
+const { verifyFirebaseToken } = require('../../auth-middleware');
+
 const accountName = process.env.AZURE_STORAGE_ACCOUNT_NAME;
 const accountKey = process.env.AZURE_STORAGE_ACCOUNT_KEY;
 const containerName = "images";
@@ -13,8 +15,12 @@ app.http('getUploadUrl', {
     authLevel: 'anonymous',
     handler: async (request, context) => {
         context.log(`[getUploadUrl] HTTP trigger processed a request.`);
+        const authResult = await verifyFirebaseToken(request, context);
+        if (authResult.error) return authResult.error;
         try {
-            const blobName = request.query.get('blobName') || (`${Date.now()}-${Math.random()}.jpg`);
+            const userId = authResult.user.uid;
+            const originalFilename = request.query.get('blobName') || `${Date.now()}.jpg`;
+            const blobName = `${userId}/${originalFilename}`;
             const blobClient = blobServiceClient.getContainerClient(containerName).getBlobClient(blobName);
 
             const sasTokenUrl = await blobClient.generateSasUrl({

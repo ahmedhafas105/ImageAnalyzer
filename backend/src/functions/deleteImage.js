@@ -3,6 +3,8 @@ const { TableClient } = require("@azure/data-tables");
 // MODIFIED: Import all necessary components
 const { BlobServiceClient, StorageSharedKeyCredential } = require("@azure/storage-blob");
 
+const { verifyFirebaseToken } = require('../../auth-middleware'); // Import middleware
+
 // MODIFIED: Use the explicit, consistent way to create clients
 const accountName = process.env.AZURE_STORAGE_ACCOUNT_NAME;
 const accountKey = process.env.AZURE_STORAGE_ACCOUNT_KEY;
@@ -18,6 +20,12 @@ app.http('deleteImage', {
     methods: ['DELETE'],
     authLevel: 'anonymous',
     handler: async (request, context) => {
+
+        const authResult = await verifyFirebaseToken(request, context);
+        if (authResult.error) return authResult.error;
+
+        const userId = authResult.user.uid;
+
         try {
             const data = await request.json();
             const blobName = data.blobName;
@@ -26,13 +34,17 @@ app.http('deleteImage', {
                 return { status: 400, body: "Please provide a blobName." };
             }
 
+            // MODIFIED: Correctly construct the full path to the blob inside the user's folder
+            const fullBlobName = `${userId}/${blobName}`;
+            context.log(`[deleteImage] Deleting blob: ${fullBlobName} for user: ${userId}`);
+            // 1. Delete the blob
             context.log(`[deleteImage] Deleting blob: ${blobName}`);
 
-            const blobClient = blobServiceClient.getContainerClient(containerName).getBlobClient(blobName);
+            const blobClient = blobServiceClient.getContainerClient(containerName).getBlobClient(fullBlobName);
             await blobClient.delete();
             context.log(`[deleteImage] Deleted blob: ${blobName}`);
 
-            await tableClient.deleteEntity("images", blobName);
+            await tableClient.deleteEntity(userId, blobName);
             context.log(`[deleteImage] Deleted table entity for: ${blobName}`);
 
             return { status: 200, body: `Successfully deleted ${blobName}` };

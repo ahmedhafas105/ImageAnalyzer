@@ -3,55 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Azure Image Moderation</title>
+    <title>Smart Backup</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-     <!-- NEW: Add this link for Bootstrap Icons -->
+    <!-- Bootstrap Icons CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"> 
     <!-- Custom Stylesheet -->
     <link rel="stylesheet" href="style.css">
 </head>
-<body class="bg-light">
+<!-- The body is hidden by default until Firebase confirms authentication -->
+<body>
 
-    <div class="container mt-4">
-        <header class="text-center p-4 mb-4 bg-white rounded shadow-sm">
-            <h1>Image Moderation Platform</h1>
-            <p class="lead text-muted">Upload images to Azure Blob Storage for content analysis.</p>
-        </header>
-
-        <main>
-            <!-- UPLOAD SECTION -->
-            <div class="card p-3 mb-5 shadow-sm">
-                <h3 class="card-title">Upload a New Image</h3>
-                <div class="mb-3">
-                    <input class="form-control" type="file" id="imageUploadInput" accept="image/png, image/jpeg" multiple>
-                </div>
-                <div class="d-flex align-items-center">
-                    <button id="uploadButton" class="btn btn-primary">
-                        <span id="uploadSpinner" class="spinner-border spinner-border-sm" role="status" aria-hidden="true" style="display: none;"></span>
-                        <span id="uploadButtonText">Upload Image</span>
-                    </button>
-                    <!-- Status message area -->
-                    <div id="statusMessage" class="ms-3"></div>
-                </div>
-            </div>
-
-            <!-- GALLERY SECTION -->
-            <div class="gallery-container">
-                <h2 class="mb-3">Image Gallery</h2>
-                <div id="galleryGrid" class="row">
-                    <!-- Images will be dynamically loaded here by app.js -->
-                    <p id="galleryLoadingText">Loading images from Azure...</p>
-                </div>
-            </div>
-        </main>
-
-        <footer class="text-center text-muted mt-5 mb-3">
-            <p>© 2025 - Azure, Bootstrap & Sightengine Demo</p>
-        </footer>
+    <!-- This spinner shows while checking if the user is logged in -->
+    <div id="auth-loading" class="d-flex justify-content-center align-items-center vh-100">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
     </div>
 
-    <!-- Add this to the end of index.html, before </body> -->
+    <!-- This is the main application content, hidden until authentication succeeds -->
+    <div id="app-content" class="d-none">
+
+        <header class="app-header">
+            <h1>SMART BACKUP</h1>
+            <!-- The user profile dropdown will be dynamically added here by app.js -->
+        </header>
+
+        <main class="container-fluid mt-4">
+             <!-- The image gallery grid -->
+             <div id="galleryGrid" class="row">
+                <!-- A message shown while images are being fetched -->
+                <p id="galleryLoadingText" class="text-center">Loading images...</p>
+             </div>
+        </main>
+
+        <!-- The actual file input is hidden. We will trigger it with a prettier button. -->
+        <input type="file" id="imageUploadInput" accept="image/png, image/jpeg" multiple style="display: none;">
+
+        <!-- Floating Action Button for Uploading -->
+        <button id="upload-trigger-btn" class="btn btn-primary btn-lg rounded-circle fab" title="Upload Images">
+            <i class="bi bi-cloud-upload-fill"></i>
+        </button>
+    </div>
+
+
+    <!-- Add this section to index.html for floating alerts (toasts) -->
+    <div class="toast-container position-fixed top-0 end-0 p-3">
+        <!-- This is a template toast that will be cloned by our JavaScript -->
+        <div id="toastTemplate" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header">
+            <i class="bi bi-info-circle-fill me-2"></i> <!-- Icon will change based on type -->
+            <strong class="me-auto">Notification</strong>
+            <small>Just now</small>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body">
+            <!-- Toast message goes here -->
+        </div>
+        </div>
+    </div>
+    <!-- ================================================================= -->
+    <!-- MODALS (These are hidden until triggered by JavaScript) -->
+    <!-- ================================================================= -->
 
     <!-- Image Popup Modal -->
     <div class="modal fade" id="imageModal" tabindex="-1" aria-hidden="true">
@@ -61,23 +74,22 @@
               <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body p-0">
-            <img src="" class="img-fluid" id="modalImage" alt="Enlarged view">
+            <img src="" class="img-fluid rounded" id="modalImage" alt="Enlarged view">
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Add this new modal block to index.html -->
     <!-- Confirmation Modal for Deletion -->
-    <div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
+    <div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
             <div class="modal-header">
-                <h1 class="modal-title fs-5" id="confirmDeleteModalLabel">Confirm Deletion</h1>
+                <h1 class="modal-title fs-5">Confirm Deletion</h1>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body" id="deleteModalBody">
-                <!-- Message will be set by JavaScript -->
+                <!-- Confirmation message is set here by app.js -->
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -87,9 +99,11 @@
         </div>
     </div>
 
-    <!-- You need the Bootstrap JS for the modal to work. Add this if you don't have it. -->
+    <!-- ================================================================= -->
+    <!-- SCRIPTS (Order is very important) -->
+    <!-- ================================================================= -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- Our main JavaScript file -->
-    <script src="app.js"></script>
+    <script type="module" src="firebase-init.js"></script>
+    <script type="module" src="app.js"></script>
 </body>
 </html>

@@ -15,14 +15,17 @@ const blobServiceClient = new BlobServiceClient(
 const tableClient = TableClient.fromConnectionString(process.env.AzureWebJobsStorage, "imageanalysis");
 
 app.storageBlob('processImage', {
-    path: 'images/{name}',
+    path: 'images/{userId}/{name}',
     connection: 'AzureWebJobsStorage',
     handler: async (blob, context) => {
+        const userId = context.triggerMetadata.userId;
         const blobName = context.triggerMetadata.name;
-        context.log(`[processImage] Processing blob: ${blobName}`);
+        const fullBlobName = `${userId}/${blobName}`;
+        context.log(`[processImage] Processing blob: ${fullBlobName}`);
 
         try {
-            const blobClient = blobServiceClient.getContainerClient(containerName).getBlobClient(blobName);
+            // MODIFIED: Use the fullBlobName to get the correct blob client
+            const blobClient = blobServiceClient.getContainerClient(containerName).getBlobClient(fullBlobName);
             const imageUrlWithSas = await blobClient.generateSasUrl({
                 permissions: BlobSASPermissions.parse("r"),
                 expiresOn: new Date(new Date().valueOf() + 3600 * 1000),
@@ -31,7 +34,7 @@ app.storageBlob('processImage', {
             const sightengineApiUser = process.env.SIGHTENGINE_API_USER;
             const sightengineApiSecret = process.env.SIGHTENGINE_API_SECRET;
             
-            const models_to_check = 'nudity-2.0,wad,offensive,self-harm';
+            const models_to_check = 'nudity-2.0,wad,offensive,self-harm,violence,gore';
             
             const response = await axios.get('https://api.sightengine.com/1.0/check.json', {
                 params: {
@@ -51,15 +54,16 @@ app.storageBlob('processImage', {
             const isAdult = ((data.nudity?.sexual_activity ?? 0) > 0.5 || (data.nudity?.explicit ?? 0) > 0.5 || (data.nudity?.suggestive ?? 0) > 0.8);
             const isWeapon = (data.weapon ?? 0) > 0.5;
             const isDrugs = (data.drugs ?? 0) > 0.5;
-            const isOffensive = (data.offensive ?? 0) > 0.5;
-            const isSelfHarm = (data.self_harm ?? 0) > 0.5;
-            const isViolent = false; // 'violence' model is not in our current check
+            const isOffensive = (data.offensive?.prob ?? 0) > 0.5;
+            const isSelfHarm = (data.self_harm?.prob ?? 0) > 0.5;
+            const isViolent = (data.violence?.prob ?? 0) > 0.5;
+            const isGore = (data.gore?.prob ?? 0) > 0.5;
 
             const entity = {
-                partitionKey: "images",
+                partitionKey: userId,
                 rowKey: blobName,
                 imageUrl: context.triggerMetadata.uri,
-                isAdult, isViolent, isOffensive, isWeapon, isDrugs, isSelfHarm,
+                isAdult, isViolent, isOffensive, isWeapon, isDrugs, isSelfHarm, isGore,
                 sightengineResponse: JSON.stringify(data)
             };
 
