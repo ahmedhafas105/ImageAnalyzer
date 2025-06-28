@@ -80,14 +80,40 @@ body {
 }
 
 /* Floating Action Button for Uploading */
-.fab {
+/* .fab {
     position: fixed;
     bottom: 25px;
     right: 25px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-    font-size: 1.5rem;
+    font-size: 1.8rem;
     width: 60px;
     height: 60px;
+    color: #183055;
+} */
+
+#upload-icon {
+    font-size: 1.9rem;
+    transition: transform 0.2s ease-in-out;
+    color: #EFE4D2;
+}
+#upload-trigger-btn {
+    position: fixed;
+    bottom: 25px;
+    right: 25px;
+    width: 50px;
+    height: 50px;
+    padding-top: 3px;
+    padding-bottom: 3px;
+    padding-left: 3px;
+    padding-right: 3px;
+    align-items: center;
+    background-color: #1a3a6b;
+    border-color: #1a3a6b;
+}
+#upload-icon:hover {
+    transition: transform 0.2s ease-in-out;
+    color: #fff;
+    
 }
 
 /* Add this to the end of your style.css */
@@ -147,3 +173,59 @@ body {
 .toast-container {
     z-index: 1100; /* A high z-index to appear over modals (usually z-index 1050) */
 }
+
+
+/* Profile drop-down menu design */
+/* ============================================= */
+/*  NEW STYLES FOR CUSTOM PROFILE DROPDOWN         */
+/* ============================================= */
+
+.profile-dropdown-menu {
+    background-color: #e0e0e0; /* The light grey background from your image */
+    border: none;
+    border-radius: 12px; /* More rounded corners */
+    padding: 0.5rem 0;
+    min-width: 180px; /* Give it some space */
+    box-shadow: 0 5px 25px rgba(0,0,0,0.15);
+}
+
+.profile-item {
+    font-weight: 500;
+
+    padding: 0.5rem 1rem;
+    color: #000000 !important; /* Important to override Bootstrap's default link color */
+}
+
+.profile-name {
+    font-size: 0.9rem;
+    letter-spacing: 1px;
+
+}
+
+.profile-email {
+    font-size: 1rem;
+
+    /* This creates the purple box highlight from your image when the element is focused */
+
+    outline-offset: 2px;
+}
+
+.profile-logout {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #d9534f !important; /* A bootstrap-like danger red color */
+}
+
+/* Override Bootstrap's hover effect to be more subtle */
+.profile-dropdown-menu .dropdown-item:hover,
+.profile-dropdown-menu .dropdown-item:focus {
+    background-color: #d1d1d1;
+}
+
+/* Styling for the horizontal divider */
+.profile-dropdown-menu .dropdown-divider {
+    border-top: 1px solid #1a3a6b;
+    margin: 0.5rem 1rem; /* Add some space around the line */
+}
+
+
