@@ -142,3 +142,8 @@ body {
 .tag.tag-drugs { background-color: rgba(25, 135, 84, 0.8); }    /* Green */
 .tag.tag-selfharm { background-color: rgba(111, 66, 193, 0.8); }  /* Purple */
 .tag.tag-gore { background-color: rgba(139, 7, 7, 0.8); }      /* Dark Red for Gore */
+
+/* Add this to style.css to ensure toasts are always on top */
+.toast-container {
+    z-index: 1100; /* A high z-index to appear over modals (usually z-index 1050) */
+}

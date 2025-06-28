@@ -47,6 +47,21 @@
     </div>
 
 
+    <!-- Add this section to index.html for floating alerts (toasts) -->
+    <div class="toast-container position-fixed top-0 end-0 p-3">
+        <!-- This is a template toast that will be cloned by our JavaScript -->
+        <div id="toastTemplate" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header">
+            <i class="bi bi-info-circle-fill me-2"></i> <!-- Icon will change based on type -->
+            <strong class="me-auto">Notification</strong>
+            <small>Just now</small>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body">
+            <!-- Toast message goes here -->
+        </div>
+        </div>
+    </div>
     <!-- ================================================================= -->
     <!-- MODALS (These are hidden until triggered by JavaScript) -->
     <!-- ================================================================= -->

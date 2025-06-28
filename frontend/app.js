@@ -15,8 +15,12 @@ const galleryGrid = document.getElementById('galleryGrid');
 const galleryLoadingText = document.getElementById('galleryLoadingText');
 const authLoading = document.getElementById('auth-loading');
 const appContent = document.getElementById('app-content');
-
+// NEW: Reference to the toast container
+const toastContainer = document.querySelector('.toast-container');
 let imageModal, modalImage, confirmDeleteModal, deleteModalBody, confirmDeleteButton;
+// NEW: Global variables to manage the polling state
+let pollingInterval;
+let imageCountBeforeUpload = 0;
 
 // =================================================================
 // MAIN APP ENTRY POINT
@@ -113,26 +117,73 @@ async function addProfileDropdown(user) {
     document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
 }
 
-async function getAuthHeader() {
-    const user = auth.currentUser;
-    if (!user) throw new Error("User not authenticated.");
-    const token = await getIdToken(user);
-    return { 'Authorization': `Bearer ${token}` };
+
+// =================================================================
+// DYNAMIC REFRESH (POLLING) LOGIC
+// =================================================================
+
+/**
+ * Starts polling the backend for new images every 5 seconds.
+ * It will stop once the number of images increases.
+ * @param {number} countBefore - The number of images before the upload.
+ * @param {number} expectedCount - The expected number of images after upload.
+ */
+function startPollingForNewImages(countBefore, expectedCount) {
+    // Clear any existing timer to be safe
+    if (pollingInterval) clearInterval(pollingInterval);
+
+    let attempts = 0;
+    const maxAttempts = 12; // Poll for a maximum of 60 seconds (12 * 5s)
+
+    pollingInterval = setInterval(async () => {
+        attempts++;
+        // Stop if it takes too long
+        if (attempts > maxAttempts) {
+            clearInterval(pollingInterval);
+            showToast("Analysis is taking longer than usual. The gallery will update when ready.", "danger");
+            setUploadButtonState(false);
+            return;
+        }
+
+        const currentImages = await getImagesFromServer();
+        if (currentImages && currentImages.length >= expectedCount) {
+            // Success! We found the new images.
+            clearInterval(pollingInterval);
+            renderGallery(currentImages); // Render the final state
+            setUploadButtonState(false);
+            showToast("Analysis complete and gallery updated!", "primary");
+        }
+    }, 5000); // Poll every 5 seconds
 }
 
+
 async function handleUpload() {
-    const files = imageInput.files;
-    if (files.length === 0) return;
-    setUploadButtonState(true);
-    try {
-        await Promise.all(Array.from(files).map(file => uploadSingleFile(file)));
-        await loadImages();
-    } catch (error) {
-        alert(`Error: ${error.message}`);
-    } finally {
-        setUploadButtonState(false);
-        imageInput.value = '';
-    }
+    const files = imageInput.files;
+    if (files.length === 0) return;
+    setUploadButtonState(true);
+
+    // --- FIX: DEFINE THE VARIABLE NEEDED FOR POLLING ---
+    // We get the current image count from the global variable (set in renderGallery)
+    // and calculate the expected count after the new uploads finish.
+    const expectedImageCount = imageCountBeforeUpload + files.length;
+
+    try {
+        await Promise.all(Array.from(files).map(file => uploadSingleFile(file)));
+        showToast(`Upload successful! Analyzing ${files.length} image(s)...`, "success");
+
+        // Now this function call has the correct, defined variables.
+        startPollingForNewImages(imageCountBeforeUpload, expectedImageCount);
+
+    } catch (error) {
+        showToast(`Error: ${error.message}`, 'danger');
+        // Re-enable the button immediately if there was an error during upload.
+        setUploadButtonState(false);
+    } finally {
+        // --- FIX: REMOVED setUploadButtonState(false) ---
+        // The button state will now be correctly managed by the startPollingForNewImages function,
+        // re-enabling only when the process is truly complete or has timed out.
+        imageInput.value = '';
+    }
 }
 
 async function uploadSingleFile(file) {
@@ -162,9 +213,13 @@ async function executeDelete() {
             headers: { ...headers, 'Content-Type': 'application/json' },
             body: JSON.stringify({ blobName })
         });
+        // MODIFIED: Use toast notification on success
+        showToast(`Successfully deleted ${blobName}.`, 'warning');
         await loadImages();
     } catch (error) {
-        alert(`Deletion failed: ${error.message}`);
+        // MODIFIED: Use toast notification for errors
+        showToast(`Deletion failed: ${error.message}`, 'danger');
+        console.log(`Deletion failed: ${error.message}`);
     } finally {
         confirmDeleteModal.hide();
         setConfirmDeleteButtonState(false);
@@ -175,84 +230,165 @@ async function loadImages() {
     galleryLoadingText.style.display = 'block';
     galleryGrid.innerHTML = '';
     try {
+        const images = await getImagesFromServer();
+        if (images) {
+            renderGallery(images);
+        }
+    } catch (error) {
+        console.error('Error loading gallery:', error);
+        galleryGrid.innerHTML = `<p class="text-danger text-center col-12">Could not load gallery. Please try again.</p>`;
+    }
+}
+
+/**
+ * NEW: Fetches the image list from the backend. Separated for reuse by polling function.
+ */
+async function getImagesFromServer() {
+    try {
         const headers = await getAuthHeader();
         const response = await fetch(`${FUNCTION_APP_URL}/getImages`, { headers });
         if (!response.ok) {
             if (response.status === 401 || response.status === 403) window.location.replace('signin.html');
-            return;
+            return null;
         }
-        const images = await response.json();
-        galleryLoadingText.style.display = 'none';
-
-        if (images.length === 0) {
-            galleryGrid.innerHTML = '<p class="text-muted text-center col-12">Your cloud is empty. Upload some images to get started!</p>';
-            return;
-        }
-        images.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-        images.forEach(image => {
-            const col = document.createElement('div');
-            col.className = 'col-xl-3 col-lg-4 col-md-6 col-sm-12 mb-4';
-            const card = document.createElement('div');
-            card.className = 'gallery-card';
-            const img = document.createElement('img');
-            img.src = image.displayUrl;
-            img.alt = image.rowKey;
-            
-            img.addEventListener('click', () => {
-                modalImage.src = img.src;
-                imageModal.show();
-            });
-
-            const deleteButton = document.createElement('button');
-            deleteButton.className = 'delete-button';
-            deleteButton.innerHTML = '<i class="bi bi-trash3-fill"></i>';
-            deleteButton.dataset.blobName = image.rowKey;
-            deleteButton.addEventListener('click', handleDelete);
-            
-           // --- START OF THE TAGGING LOGIC FIX ---
-            const tagsContainer = document.createElement('div');
-            tagsContainer.className = 'tags-container';
-
-            
-            
-            // Helper function to create a tag and add it to the container
-            const createTag = (text, type) => {
-                const tag = document.createElement('span');
-                tag.className = `tag tag-${type}`;
-                tag.textContent = text;
-                tagsContainer.appendChild(tag);
-                
-            };
-
-            // Check each flag from the backend data and create a corresponding tag
-            if (image.isAdult) createTag('Adult', 'adult');
-            if (image.isViolent) createTag('Violence', 'violent');
-            if (image.isGore) createTag('GORE', 'gore'); // The new tag
-            if (image.isOffensive) createTag('Offensive', 'offensive');
-            if (image.isWeapon) createTag('Weapon', 'weapon');
-            if (image.isDrugs) createTag('Drugs', 'drugs');
-            if (image.isSelfHarm) createTag('Self-Harm', 'selfharm');
-
-            // The blur logic now includes 'isGore'
-            const isFlagged = image.isAdult || image.isViolent || image.isOffensive || image.isWeapon || image.isDrugs || image.isSelfHarm || image.isGore;
-            if (isFlagged) {
-                 img.classList.add('flagged-image');
-            }
-            
-            // Add the tags container to the card. It will be positioned by the CSS.
-            card.appendChild(tagsContainer);
-            
-            // --- END OF THE TAGGING LOGIC FIX ---
-
-            card.appendChild(deleteButton);
-            card.appendChild(img);
-            col.appendChild(card);
-            galleryGrid.appendChild(col);
-        });
-
+        return await response.json();
     } catch (error) {
-        console.error('Error loading gallery:', error);
-        galleryGrid.innerHTML = `<p class="text-danger text-center col-12">Could not load gallery. Please try again.</p>`;
+        console.error("Failed to get images from server:", error);
+        return null;
+    }
+}
+
+/**
+ * NEW: Renders the images into the DOM. Separated for reuse.
+* @param {Array} images - The array of image objects to render.
+ */
+function renderGallery(images) {
+    galleryLoadingText.style.display = 'none';
+    galleryGrid.innerHTML = '';
+    
+    if (images.length === 0) {
+        galleryGrid.innerHTML = '<p class="text-muted text-center col-12">Your cloud is empty. Upload some images to get started!</p>';
+        return;
+    }
+
+    // This is a global variable that the upload polling will use.
+    imageCountBeforeUpload = images.length;
+
+    images.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    images.forEach(image => {
+        const col = document.createElement('div');
+        col.className = 'col-xl-3 col-lg-4 col-md-6 col-sm-12 mb-4';
+        const card = document.createElement('div');
+        card.className = 'gallery-card';
+        const img = document.createElement('img');
+        img.src = image.displayUrl;
+        img.alt = image.rowKey;
+        img.addEventListener('click', () => {
+            modalImage.src = img.src;
+            imageModal.show();
+        });
+
+        const tagsContainer = document.createElement('div');
+        tagsContainer.className = 'tags-container';
+        
+        const createTag = (text, type) => {
+            const tag = document.createElement('span');
+            tag.className = `tag tag-${type}`;
+            tag.textContent = text;
+            tagsContainer.appendChild(tag);
+        };
+
+        if (image.isAdult) createTag('ADULT', 'adult');
+        if (image.isViolent) createTag('VIOLENCE', 'violent');
+        if (image.isGore) createTag('GORE', 'gore');
+        if (image.isOffensive) createTag('OFFENSIVE', 'offensive');
+        if (image.isWeapon) createTag('WEAPON', 'weapon');
+        if (image.isDrugs) createTag('DRUGS', 'drugs');
+        if (image.isSelfHarm) createTag('SELF-HARM', 'selfharm');
+
+        const isFlagged = image.isAdult || image.isViolent || image.isOffensive || image.isWeapon || image.isDrugs || image.isSelfHarm || image.isGore;
+        if (isFlagged) {
+            img.classList.add('flagged-image');
+        }
+        
+        const deleteButton = document.createElement('button');
+        deleteButton.className = 'delete-button';
+        deleteButton.innerHTML = '<i class="bi bi-trash3-fill"></i>';
+        deleteButton.dataset.blobName = image.rowKey;
+        deleteButton.addEventListener('click', handleDelete);
+
+        // --- FIX: APPEND THE TAGS AND DELETE BUTTON ---
+        // The tags container must be appended to the card to be visible.
+        card.appendChild(tagsContainer); 
+        card.appendChild(deleteButton);
+        card.appendChild(img);
+        col.appendChild(card);
+        galleryGrid.appendChild(col);
+    });
+}
+
+// --- UI HELPER FUNCTIONS ---
+
+async function getAuthHeader() {
+    const user = auth.currentUser;
+    if (!user) throw new Error("User not authenticated.");
+    const token = await getIdToken(user);
+    return { 'Authorization': `Bearer ${token}` };
+}
+
+// =================================================================
+// NEW TOAST NOTIFICATION FUNCTION
+// =================================================================
+
+/**
+ * Creates and displays a floating toast notification.
+ * @param {string} message The message to display.
+ * @param {string} type 'success' or 'danger' for styling.
+ */
+function showToast(message, type = 'success') {
+    const toastTemplate = document.getElementById('toastTemplate');
+    const newToast = toastTemplate.cloneNode(true); // Create a copy
+    newToast.id = ''; // Remove the ID from the clone
+    
+    const toastBody = newToast.querySelector('.toast-body');
+    const toastIcon = newToast.querySelector('.toast-header i');
+
+    toastBody.textContent = message;
+
+    // Style the toast based on the type
+    if (type === 'success') {
+        newToast.classList.add('text-bg-success'); // Bootstrap 5 class for green toast
+        toastIcon.className = 'bi bi-check-circle-fill me-2';
+    } else if (type === 'warning') { // 'warning'
+        newToast.classList.add('text-bg-warning'); // Bootstrap 5 class for red toast
+        toastIcon.className = 'bi bi-exclamation-triangle-fill me-2';
+    } else if (type === 'primary') { // 'info'
+        newToast.classList.add('text-bg-primary'); // Bootstrap 5 class for red toast
+        toastIcon.className = 'bi bi-check-circle-fill me-2';
+    } else {
+        newToast.classList.add('text-bg-danger'); // Default to red toast
+        toastIcon.className = 'bi bi-x-circle-fill me-2';
+    }
+
+    toastContainer.appendChild(newToast);
+
+    const toast = new bootstrap.Toast(newToast, { delay: 4000 }); // Autohide after 4 seconds
+    toast.show();
+
+    // Clean up the DOM after the toast is hidden
+    newToast.addEventListener('hidden.bs.toast', () => {
+        newToast.remove();
+    });
+}
+
+function setUploadButtonState(isUploading) {
+    uploadTriggerButton.disabled = isUploading;
+    if (isUploading) {
+        uploadTriggerButton.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+        uploadTriggerButton.title = 'Processing...';
+    } else {
+        uploadTriggerButton.innerHTML = '<i class="bi bi-cloud-upload-fill"></i>';
+        uploadTriggerButton.title = 'Upload Images';
     }
 }
 
@@ -262,15 +398,6 @@ function setConfirmDeleteButtonState(isDeleting) {
         confirmDeleteButton.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Deleting...';
     } else {
         confirmDeleteButton.innerHTML = 'Delete';
-    }
-}
-
-function setUploadButtonState(isUploading) {
-    uploadTriggerButton.disabled = isUploading;
-    if(isUploading) {
-        uploadTriggerButton.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
-    } else {
-        uploadTriggerButton.innerHTML = '<i class="bi bi-cloud-upload-fill"></i>';
     }
 }
 
