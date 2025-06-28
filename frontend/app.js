@@ -99,15 +99,21 @@ async function addProfileDropdown(user) {
     
     const profileHTML = `
         <div class="dropdown" id="profile-dropdown">
-            <button class="btn btn-dark rounded-circle d-flex align-items-center justify-content-center" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="width: 40px; height: 40px;" title="Profile and settings">
+            <button class="btn btn-dark rounded-circle d-flex align-items-center justify-content-center" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="width: 40px; height: 40px; background-color: #183055;">
                 <i class="bi bi-person-fill fs-5"></i>
             </button>
-            <ul class="dropdown-menu dropdown-menu-end">
+            <ul class="dropdown-menu dropdown-menu-end profile-dropdown-menu">
                 <li><h6 class="dropdown-header">PROFILE</h6></li>
-                <li><span class="dropdown-item-text text-truncate">${userName}</span></li>
-                <li><span class="dropdown-item-text text-truncate">${user.email}</span></li>
+                <li>
+                    <span class="dropdown-item-text profile-item profile-name">${userName}</span>
+                </li>
+                <li>
+                    <span class="dropdown-item-text profile-item profile-email">${user.email}</span>
+                </li>
                 <li><hr class="dropdown-divider"></li>
-                <li><button class="dropdown-item text-danger" id="logout-btn">LOG OUT</button></li>
+                <li>
+                    <button class="dropdown-item profile-item profile-logout" id="logout-btn">LOG OUT</button>
+                </li>
             </ul>
         </div>
     `;
