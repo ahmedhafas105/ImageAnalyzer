@@ -1,6 +1,6 @@
 <!-- Project Banner -->
 <p align="center">
-  <img src="https://user-images.githubusercontent.com/10903957/205934336-976451e6-77a8-4395-8123-5249626e82c7.png" alt="Smart Backup Project Banner" width="1024"/>
+  <img src="https://placehold.co/1280x640/6366f1/FFFFFF?text=Smart+Backup" alt="Smart Backup Project Banner"/>
 </p>
 
 <!-- Project Title -->
