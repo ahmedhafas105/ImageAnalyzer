@@ -6,12 +6,12 @@ import { getFirestore } from "https://www.gstatic.com/firebasejs/9.22.0/firebase
 // Your web app's Firebase configuration
 // PASTE YOUR FIREBASE CONFIG OBJECT HERE
 const firebaseConfig = {
-  apiKey: "AIzaSyBWvFsWbWc_g9ThMMs0jIaN4OBBh1tBJQg",
-  authDomain: "image-moderator-auth.firebaseapp.com",
-  projectId: "image-moderator-auth",
-  storageBucket: "image-moderator-auth.firebasestorage.app",
-  messagingSenderId: "1027136931852",
-  appId: "1:1027136931852:web:0b43f5233e593e40034629"
+  apiKey: "====",
+  authDomain: "====",
+  projectId: "===",
+  storageBucket: "===",
+  messagingSenderId: "===",
+  appId: "==="
 };
 
 // Initialize Firebase
