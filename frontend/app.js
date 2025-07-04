@@ -6,7 +6,7 @@ import { doc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-
 // --- DEBUG LOG #1: Check if the script file itself is loading ---
 console.log("app.js script started.");
 
-const FUNCTION_APP_URL = "http://localhost:7071/api";
+const FUNCTION_APP_URL = "https://smartbackup-functions.azurewebsites.net/api";
 
 // DOM references
 const imageInput = document.getElementById('imageUploadInput');
