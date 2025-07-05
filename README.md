@@ -3,11 +3,22 @@
   <img src="https://placehold.co/1280x640/6366f1/FFFFFF?text=Smart+Backup" alt="Smart Backup Project Banner"/>
 </p>
 
-<!-- Project Title and Short Description -->
+<!-- Project Title -->
 <h1 align="center">
   🚀 Smart Backup - AI-Powered Image Moderation Platform
 </h1>
 
+<!-- Live Demo and Social Links -->
+<p align="center">
+  <a href="https://imagemoderatorstorage.z13.web.core.windows.net" target="_blank">
+    <img src="https://img.shields.io/badge/Live-Demo-brightgreen?style=for-the-badge&logo=Azure" alt="Live Demo">
+  </a>
+  <a href="https://www.linkedin.com/posts/mohammed-haleem-ahmed-hafas-27379722a_firebaseauthentication-cloudfirestore-azure-activity-7345789962153299968-IxUZ?utm_source=share&utm_medium=member_desktop" target="_blank">
+    <img src="https://img.shields.io/badge/LinkedIn-Post-0A66C2?style=for-the-badge&logo=linkedin" alt="LinkedIn Post">
+  </a>
+</p>
+
+<!-- Project Description -->
 <p align="center">
   A full-stack, serverless web application for securely uploading, storing, and automatically moderating images. Built with Azure, Firebase, and Sightengine, this platform provides a secure multi-user environment where each user has a private gallery for their content.
 </p>
@@ -42,10 +53,8 @@
         <li>Integrates with the <strong>Sightengine API</strong> to automatically analyze every image upon upload.</li>
         <li>Detects a wide range of content including:
           <ul>
-            <li>Nudity & Adult Content</li>
-            <li>Weapons, Drugs, & Alcohol</li>
-            <li>Offensive Content & Hate Speech</li>
-            <li>Gore & Self-Harm</li>
+            <li>Nudity, Offensive Content & Gore</li>
+            <li>Weapons, Drugs, & Self-Harm</li>
           </ul>
         </li>
       </ul>
@@ -73,6 +82,18 @@
   </tr>
 </table>
 
+## 🏗️ Architecture & Deployment
+
+This project uses a modern serverless architecture, with the frontend and backend deployed as separate, scalable services on Azure.
+
+**Architecture Flow:**
+1.  **User authenticates** with `Firebase Auth`.
+2.  **Frontend** (`Azure Static Website`) requests a secure upload URL from the `Azure Function App`, passing a Firebase token.
+3.  **Backend** (`Azure Function`) verifies the token, creates a SAS token for a user-specific blob path, and returns it.
+4.  **Frontend uploads** the file directly to `Azure Blob Storage`.
+5.  A **Blob Trigger** activates another function to analyze the image with `Sightengine` and save the results to `Azure Table Storage`.
+6.  The **Frontend polls** for the new image record, and the gallery updates dynamically.
+
 ## 🛠️ Technology Stack
 
 | Category         | Technology                                           |
@@ -82,13 +103,13 @@
 | **Backend**      | `Azure Functions` `Node.js v4 Model`                 |
 | **Storage**      | `Azure Blob Storage` `Azure Table Storage`             |
 | **AI/ML**        | `Sightengine API`                                    |
-| **Dev Tools**    | `VS Code` `Azure Functions Core Tools` `Live Server` |
+| **Deployment**   | `Azure Static Website (Storage)` `Azure Function App` `VS Code`|
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Getting Started (Local Development)
 
-Follow these steps to get the project up and running on your local machine.
+Follow these steps to get the project up and running on your local machine for development and testing.
 
 ### Prerequisites
 
@@ -104,7 +125,7 @@ Follow these steps to get the project up and running on your local machine.
 1.  **Azure:**
     -   Create a **Storage Account**.
     -   Inside it, create a **Blob Container** named `images` and a **Table** named `imageanalysis`.
-    -   Configure **CORS** on the Blob service to allow `http://127.0.0.1:5500`.
+    -   Configure **CORS** on the Blob service to allow `http://127.0.0.1:5500` (for local dev) and your deployed URL `https://imagemoderatorstorage.z13.web.core.windows.net`.
 
 2.  **Firebase:**
     -   Create a new project.
@@ -117,8 +138,8 @@ Follow these steps to get the project up and running on your local machine.
 
 1.  **Clone this repository:**
     ```sh
-    git clone https://github.com/your-username/your-repo-name.git
-    cd your-repo-name
+    git clone https://github.com/ahmedhafas105/ImageAnalyzer.git
+    cd ImageAnalyzer
     ```
 
 2.  **Configure Frontend:**
@@ -127,13 +148,13 @@ Follow these steps to get the project up and running on your local machine.
 
 3.  **Configure Backend:**
     -   Navigate to the `backend/` directory.
-    -   Run `npm install` to install all required dependencies (`firebase-admin`, `axios`, etc.).
-    -   Move the Firebase service account key you downloaded into the `backend/` folder and rename it to `firebase-service-account.json`.
-    -   Create a `local.settings.json` file in the `backend/` folder and populate it with all your secret keys. Refer to the provided `local.settings.example.json` for the required structure.
+    -   Run `npm install` to install all required dependencies.
+    -   Move the Firebase service account key into the `backend/` folder and rename it to `firebase-service-account.json`.
+    -   Create a `local.settings.json` file in the `backend/` folder and populate it with all your secret keys. (An example file is provided).
 
 ### 3. **Running the Application**
 
-> ⚠️ You need **two terminals** open to run the full application.
+> ⚠️ You need **two terminals** open to run the full application locally.
 
 #### Terminal 1: Start the Backend
 ```sh
